@@ -18,6 +18,10 @@ int main(int argc, char **argv) {
 	zend_hash_add(&ht, "ccc", 3, "333", sizeof(void*), NULL);
 	zend_hash_index_update(&ht, 4, "444", sizeof(void*), NULL);
 
+    str_val = NULL;
+    zend_hash_find(&ht, "bbb", 3, (void**)&str_val);
+    printf("find(bbb) = %s\n", str_val);
+
 	zend_hash_internal_pointer_reset_ex(&ht, &pos);
 	while (zend_hash_get_current_data_ex(&ht, (void **)&str_val, &pos) == SUCCESS) {
 		key_type = zend_hash_get_current_key_ex(&ht, &str_key, &str_key_len, &num_key, 0, &pos);
@@ -27,7 +31,7 @@ int main(int argc, char **argv) {
 				printf("%s => %s\n", str_key, str_val);
 				break;
 			case HASH_KEY_IS_LONG:
-				printf("%d => %s\n", num_key, str_val);
+				printf("%ld => %s\n", num_key, str_val);
 				break;
 			EMPTY_SWITCH_DEFAULT_CASE()
 		}

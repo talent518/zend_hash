@@ -125,6 +125,8 @@ typedef enum {
 #endif
 
 #define IS_INTERNED(s) (0)
+#define INTERNED_HASH(s) \
+	(((Bucket*)(((char*)(s))-sizeof(Bucket)))->h)
 
 #include <assert.h>
 #define ZEND_ASSERT(exp) assert(exp)
