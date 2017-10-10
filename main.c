@@ -13,10 +13,10 @@ int main(int argc, char **argv) {
 
 	zend_hash_init(&ht, 2, NULL);
 
-	zend_hash_add(&ht, "aaa", 3, "111", sizeof(void*), NULL);
-	zend_hash_add(&ht, "bbb", 3, "222", sizeof(void*), NULL);
-	zend_hash_add(&ht, "ccc", 3, "333", sizeof(void*), NULL);
-	zend_hash_index_update(&ht, 4, "444", sizeof(void*), NULL);
+	zend_hash_add(&ht, "aaa", 3, "1111111111111111", 0, NULL);
+	zend_hash_add(&ht, "bbb", 3, "2222222222222222", 0, NULL);
+	zend_hash_add(&ht, "ccc", 3, "3333333333333333", 0, NULL);
+	zend_hash_index_update(&ht, 4, "4444444444444444", 0, NULL);
 
     str_val = NULL;
     zend_hash_find(&ht, "bbb", 3, (void**)&str_val);

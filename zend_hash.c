@@ -76,32 +76,40 @@ ulong zend_hash_func(const char *arKey, uint nKeyLength)
 }
 
 
-#define UPDATE_DATA(ht, p, pData, nDataSize)											\
-	if (nDataSize <= sizeof(void*)) {													\
-		if ((p)->pData != &(p)->pDataPtr) {												\
-			free((p)->pData);															\
+#define UPDATE_DATA(ht, p, _pData, nDataSize) \
+	(p)->nDataSize = nDataSize; \
+	if (nDataSize <= 0) { \
+		(p)->pData = _pData; \
+		(p)->pDataPtr = NULL; \
+	} else if (nDataSize <= sizeof(void*)) { \
+		if ((p)->pData != &(p)->pDataPtr) { \
+			free((p)->pData); \
+		} \
+		memcpy(&(p)->pDataPtr, _pData, nDataSize); \
+		(p)->pData = &(p)->pDataPtr; \
+	} else { \
+		if ((p)->pData == &(p)->pDataPtr) { \
+			(p)->pData = (void *) malloc(nDataSize); \
+			(p)->pDataPtr = NULL; \
+		} else { \
+			(p)->pData = (void *) realloc((p)->pData, nDataSize); \
+			/* (p)->pDataPtr is already NULL so no need to initialize it */ \
 		}																				\
-		memcpy(&(p)->pDataPtr, pData, nDataSize);										\
-		(p)->pData = &(p)->pDataPtr;													\
-	} else {																			\
-		if ((p)->pData == &(p)->pDataPtr) {												\
-			(p)->pData = (void *) malloc(nDataSize);									\
-			(p)->pDataPtr=NULL;															\
-		} else {																		\
-			(p)->pData = (void *) realloc((p)->pData, nDataSize);						\
-			/* (p)->pDataPtr is already NULL so no need to initialize it */				\
-		}																				\
-		memcpy((p)->pData, pData, nDataSize);											\
+		memcpy((p)->pData, _pData, nDataSize); \
 	}
 
-#define INIT_DATA(ht, p, _pData, nDataSize);								\
-	if (nDataSize <= sizeof(void*)) {										\
-		memcpy(&(p)->pDataPtr, (_pData), nDataSize);						\
-		(p)->pData = &(p)->pDataPtr;										\
-	} else {																\
-		(p)->pData = (void *) malloc(nDataSize);							\
-		memcpy((p)->pData, (_pData), nDataSize);							\
-		(p)->pDataPtr=NULL;													\
+#define INIT_DATA(ht, p, _pData, nDataSize); \
+	(p)->nDataSize = nDataSize; \
+	if (nDataSize <= 0) { \
+		(p)->pData = _pData; \
+		(p)->pDataPtr = NULL; \
+	} else if (nDataSize <= sizeof(void*)) { \
+		memcpy(&(p)->pDataPtr, (_pData), nDataSize); \
+		(p)->pData = &(p)->pDataPtr; \
+	} else { \
+		(p)->pData = (void *) malloc(nDataSize);	 \
+		memcpy((p)->pData, (_pData), nDataSize); \
+		(p)->pDataPtr = NULL; \
 	}
 
 #define CHECK_INIT(ht) do {															\
@@ -143,7 +151,7 @@ static zend_always_inline void i_zend_hash_bucket_delete(HashTable *ht, Bucket *
 	if (ht->pDestructor) {
 		ht->pDestructor(p->pData);
 	}
-	if (p->pData != &p->pDataPtr) {
+	if (p->nDataSize && p->pData != &p->pDataPtr) {
 		free(p->pData);
 	}
 	free(p);
@@ -465,7 +473,7 @@ void zend_hash_destroy(HashTable *ht)
 		if (ht->pDestructor) {
 			ht->pDestructor(q->pData);
 		}
-		if (q->pData != &q->pDataPtr) {
+		if (q->nDataSize && q->pData != &q->pDataPtr) {
 			free(q->pData);
 		}
 		free(q);
@@ -497,7 +505,7 @@ void zend_hash_clean(HashTable *ht)
 		if (ht->pDestructor) {
 			ht->pDestructor(q->pData);
 		}
-		if (q->pData != &q->pDataPtr) {
+		if (q->nDataSize && q->pData != &q->pDataPtr) {
 			free(q->pData);
 		}
 		free(q);
